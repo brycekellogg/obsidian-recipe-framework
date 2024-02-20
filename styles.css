@@ -6,3 +6,13 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+
+div.meal-plan-recipe-list {
+	display: flex;
+	padding-right: 20px;
+}
+
+td.meal-plan-recipe-list {
+	cursor: text;
+}
