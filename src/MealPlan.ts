@@ -96,15 +96,6 @@ export default class MealPlan {
 		this.recipelog = new RecipeLog(app);
 
 		this.app = app;
-
-		/*
-	StartDate:DateTime;
-	EndDate:DateTime;
-		 *
-	StartDate: DateTime.now().minus({ "days": 2 }),
-	EndDate: DateTime.now().plus({ "days": 10 })
-		 *
-		 */
 	}
 
 	
@@ -125,13 +116,15 @@ export default class MealPlan {
 	 *
 	 **/
 	async handleMealPlanDel(event:MouseEvent) {
-		// var _a;
-		// const row = (event.target as HTMLElement).closest("tr");
-		// const timestamp = DateTime.fromISO(row.dataset.timestamp);
-		// const name = (event.target as HTMLElement).closest("[data-name]").dataset.name;
-		// this.recipeLog[timestamp.toISODate()] = (_a = this.recipeLog[timestamp.toISODate()]) == null ? void 0 : _a.filter((_) => _ != name);
-		// this.renderMealPlan();
-		// this.writeRecipeLog();
+		const row = (event.target as HTMLElement).closest("tr");
+		const timestamp = row?.dataset.timestamp;
+		const name = ((event.target as HTMLElement)?.closest("[data-name]") as HTMLElement)?.dataset.name;
+
+		if (!timestamp || !name) return;
+		
+		this.recipelog.del(timestamp, name);
+		this.renderMealPlan();
+		this.recipelog.write(this.logpath);
 	}
 
 
