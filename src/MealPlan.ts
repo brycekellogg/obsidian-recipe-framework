@@ -86,7 +86,6 @@ export default class MealPlan {
 		this.container = container;
 
 		this.eta = new Eta();
-		console.log(this.eta);
 		this.eta.loadTemplate("@mealPlan", templateMealPlan);
 		this.eta.loadTemplate("@mealPlanRow", templateMealPlanRow);
 		this.eta.loadTemplate("@mealPlanEntry", templateMealPlanEntry);
@@ -132,7 +131,6 @@ export default class MealPlan {
 	 *
 	 **/
 	async handleMealPlanSel(event : MouseEvent) {
-		console.log(event)
 		const name = ((event.target as HTMLElement)?.closest("[data-name]") as HTMLElement)?.dataset.name;
 		const file = this.app.vault.getAbstractFileByPath(`${this.recipepath}/${name}.md`) as TFile;
 		if (file) this.app.workspace.getLeaf("tab").openFile(file);
