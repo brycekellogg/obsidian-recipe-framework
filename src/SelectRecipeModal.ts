@@ -4,7 +4,7 @@ import {
 } from 'obsidian';
 
 import {DateTime} from 'luxon';
-import MealPlan from './MealPlan';
+import MealPlan from './views/MealPlanView';
 
 export default class SelectRecipeModal extends FuzzySuggestModal<TFile> {
 

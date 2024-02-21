@@ -6,14 +6,21 @@ import {
 import { Eta } from 'eta';
 import {DateTime} from 'luxon';
 
-import RecipeLog from './RecipeLog';
-import SelectRecipeModal from './SelectRecipeModal';
+import RecipeLog from '../RecipeLog';
+import SelectRecipeModal from '../SelectRecipeModal';
+import RecipeFramework from '../main';
+
+
+
+
+
 
 /**
  *
  *
  **/
-const templateMealPlan = `<div>
+const templateMealPlan = `
+<div>
     <table>
         <tbody>
             <% for (let date = it.start; date <= it.end; date = date.plus({'days':1})) { %>
@@ -28,7 +35,8 @@ const templateMealPlan = `<div>
 /**
  *
  */
-const templateMealPlanRow = `<tr data-timestamp="<%= it.timestamp.toISODate() %>">
+const templateMealPlanRow = `
+<tr data-timestamp="<%= it.timestamp.toISODate() %>">
     <td><p><%~ it.timestamp.toFormat('LLL d') %></p></td>
     <td><p><%~ it.timestamp.toFormat('ccc')   %></p></td>
     <td class="meal-plan-recipe-list"><div class="meal-plan-recipe-list">
@@ -43,7 +51,8 @@ const templateMealPlanRow = `<tr data-timestamp="<%= it.timestamp.toISODate() %>
 /**
  *
  **/
-const templateMealPlanEntry = `<div class="multi-select-pill internal-link" data-name="<%= it %>">
+const templateMealPlanEntry = `
+<div class="multi-select-pill internal-link" data-name="<%= it %>">
     <div class="multi-select-pill-content"><%= it %></div>
     <div class="multi-select-pill-remove-button">
         <svg xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +72,7 @@ const templateMealPlanEntry = `<div class="multi-select-pill internal-link" data
 `;
 
 
-export default class MealPlan {
+export default class MealPlanView {
 
 	// ???
 	recipelog : RecipeLog;
@@ -76,13 +85,13 @@ export default class MealPlan {
 
 	logpath : string;
 	recipepath : string;
-
+	plugin : RecipeFramework;
 	app : App;
 
 	/**
 	 *
 	 **/
-	constructor(app : App, container : HTMLElement, logpath : string, recipepath : string) {
+	constructor(plugin: RecipeFramework, source: string, container: HTMLElement) {
 		this.container = container;
 
 		this.eta = new Eta();
@@ -90,8 +99,8 @@ export default class MealPlan {
 		this.eta.loadTemplate("@mealPlanRow", templateMealPlanRow);
 		this.eta.loadTemplate("@mealPlanEntry", templateMealPlanEntry);
 
-		this.logpath = logpath;
-		this.recipepath = recipepath;
+		this.logpath = plugin.settings.LogPath;
+		this.recipepath = plugin.settings.RecipePath;
 		this.recipelog = new RecipeLog(app);
 
 		this.app = app;

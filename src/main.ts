@@ -1,31 +1,33 @@
 import {
-	App,
-	Editor,
-	MarkdownView,
-	Modal,
-	Notice,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	FuzzySuggestModal,
-	TFile,
-	MarkdownPostProcessorContext,
+    App,
+    Editor,
+    MarkdownView,
+    Modal,
+    Notice,
+    Plugin,
+    PluginSettingTab,
+    Setting,
+    FuzzySuggestModal,
+    TFile,
+    MarkdownPostProcessorContext,
 } from 'obsidian';
 
-import MealPlan from './MealPlan';
-// import { RecipeLog } from './RecipeLog';
+import {
+    MealPlanView,
+    RecommendView,
+    GenresView,
+} from './views';
 
 
-// Remember to rename these classes and interfaces!
 
 interface RecipeFrameworkSettings {
-	LogPath:string;
-	RecipePath:string;
+    LogPath:string;
+    RecipePath:string;
 }
 
 const DEFAULT_SETTINGS : RecipeFrameworkSettings = {
-	LogPath: "Food/Logs",
-	RecipePath: "Food/Recipes",
+    LogPath: "Food/Logs",
+    RecipePath: "Food/Recipes",
 }
 
 
@@ -33,29 +35,28 @@ const DEFAULT_SETTINGS : RecipeFrameworkSettings = {
 
 export default class RecipeFramework extends Plugin {
 
-	settings:RecipeFrameworkSettings;
-	// recipelog:RecipeLog;
+    settings:RecipeFrameworkSettings;
 
-	async onload() {
-		await this.loadSettings();
+    /**
+     *
+     **/
+    async onload() {
+        await this.loadSettings();
 
-		// Register a markdown clode block processor
-		this.registerMarkdownCodeBlockProcessor("recipe-framework-mealplan", (source : string, container : HTMLElement, context : MarkdownPostProcessorContext) => {
-			const mealplan = new MealPlan(this.app, container, this.settings.LogPath, this.settings.RecipePath);
-			mealplan.processMarkdown();
-		});
-	}
+        // Register a markdown clode block processor
+        this.registerMarkdownCodeBlockProcessor("recipe-mealplan",  (source, container) => new MealPlanView (this, source, container).processMarkdown());
+        this.registerMarkdownCodeBlockProcessor("recipe-recommend", (source, container) => new RecommendView(this, source, container).processMarkdown());
+        this.registerMarkdownCodeBlockProcessor("recipe-genres",    (source, container) => new GenresView   (this, source, container).processMarkdown());
+    }
 
-	onunload() {
-	}
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
 
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+    async saveSettings() {
+        await this.saveData(this.settings);
+    }
 };
 
 
