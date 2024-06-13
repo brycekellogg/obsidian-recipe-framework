@@ -106,7 +106,7 @@ export default class MealPlanView {
     async renderMealPlan() {
 
         // ???????
-        const dateStart = DateTime.now().minus({'days': 2});
+        const dateStart = DateTime.now().minus({'days': 1});
         const dateEnd   = DateTime.now().plus({'days': 10});
         const dates = Interval.fromDateTimes(dateStart, dateEnd)
                               .splitBy({days: 1})
@@ -115,6 +115,7 @@ export default class MealPlanView {
         // ????
         this.container.innerHTML = this.eta.render("@mealPlan", {
             dates: dates,
+            today: DateTime.now(),
             log: this.recipelog,
         });
     }

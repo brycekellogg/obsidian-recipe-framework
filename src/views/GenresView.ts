@@ -73,7 +73,7 @@ export default class GenresView {
                                 .map((x:TFile) => {
             return x.basename;
         });
-        console.log(data);
+        // console.log(data);
         
         this.container.innerHTML = this.eta.render("@view", {});
         // await this.recipelog.read(this.plugin.settings.LogPath);

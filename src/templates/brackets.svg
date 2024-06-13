@@ -1,0 +1,14 @@
+<div class="MiseEnPlace">
+	<span><%= it.name %></span>
+	<div class="bracket">
+		<svg class="bracket" viewBox="0 0 100 100" preserveAspectRatio="none"> 
+			<path d="M50   0 L100   0" vector-effect="non-scaling-stroke" style="fill:none;stroke-width:2" />
+			<path d="M50 100 L100 100" vector-effect="non-scaling-stroke" style="fill:none;stroke-width:2" />
+			
+			<path d="M50   0 L50  100" vector-effect="non-scaling-stroke" style="fill:none;stroke-width:1" />
+			
+			<path d="M0   50 L50   50" vector-effect="non-scaling-stroke" style="fill:none;stroke-width:1" />
+		</svg>
+	</div>
+	<%~ it.list %>
+</div>

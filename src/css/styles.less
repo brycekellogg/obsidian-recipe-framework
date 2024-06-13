@@ -7,6 +7,8 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+@import "MiseEnPlace";
+@import "Index";
 
 div.meal-plan-recipe-list {
 	display: flex;
@@ -15,4 +17,12 @@ div.meal-plan-recipe-list {
 
 td.meal-plan-recipe-list {
 	cursor: text;
+}
+
+
+
+
+.markdown-rendered tbody tr.today,
+.markdown-rendered tbody tr.today > td {
+	border-top: solid var(--interactive-accent);
 }

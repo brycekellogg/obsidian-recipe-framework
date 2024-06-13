@@ -2,7 +2,13 @@
     <table>
         <tbody>
             <% for (const date of it.dates) { %>
-                <tr data-timestamp="<%= date.toISODate() %>">
+
+                <tr 
+                    <% if (date.hasSame(it.today, "day") ) { %>
+                        class="today"
+                    <% } %>
+
+                    data-timestamp="<%= date.toISODate() %>">
                     <td><p><%~ date.toFormat('LLL d') %></p></td>
                     <td><p><%~ date.toFormat('ccc')   %></p></td>
                     <td class="meal-plan-recipe-list"><div class="meal-plan-recipe-list">
