@@ -7,14 +7,22 @@
 		"build:ts": "",
 		"build:css": "lessc src/css/styles.less build/styles.css",
 		"build:bundle": "node esbuild.config.mjs",
-		"test": "jest",
 		"install": "cp -t $INSTALL_DIR build/* manifest.json",
 		"clean": "rm -rf build/",
+		"test": "jest",
 		"all": "npm run build:css && npm run build:bundle && npm run install"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
+	"jest": {
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"moduleDirectories": [
+			"src",
+			"node_modules"
+		]
+	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
 		"@types/luxon": "^3.4.2",
@@ -25,6 +33,7 @@
 		"esbuild": "0.20.0",
 		"esbuild-plugin-inline-import": "^1.0.4",
 		"jest": "^29.7.0",
+		"less": "^4.2.0",
 		"obsidian": "latest",
 		"ts-jest": "^29.1.4",
 		"tslib": "2.4.0",
@@ -32,9 +41,9 @@
 	},
 	"dependencies": {
 		"eta": "^3.2.0",
-		"less": "^4.2.0",
 		"lodash": "^4.17.21",
 		"luxon": "^3.4.4",
+		"pajv": "^1.2.0",
 		"yaml": "^2.4.4"
 	}
 }
