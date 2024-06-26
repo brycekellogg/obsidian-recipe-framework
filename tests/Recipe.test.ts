@@ -1,7 +1,5 @@
-import {
-    Recipe,
-    FileManager,
-} from 'utils';
+import Recipe      from 'utils/Recipe';
+import FileManager from 'utils/FileManager';
 
 import {
     DateTime,

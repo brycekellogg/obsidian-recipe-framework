@@ -8,7 +8,6 @@ import {DateTime, Interval} from 'luxon';
 
 import * as templates from '../templates';
 
-import RecipeLog from '../RecipeLog';
 import SelectRecipeModal from '../SelectRecipeModal';
 import RecipeFramework from '../main';
 
@@ -26,27 +25,26 @@ export default class MealPlanViewV2 {
     logpath : string;
     recipepath : string;
     plugin : RecipeFramework;
-    app : App;
 
     /**
      *
      **/
-    constructor(plugin: RecipeFramework, source: string, container: HTMLElement) {
+    constructor(database: RecipeFramework, source: string, container: HTMLElement) {
         this.container = container;
+        this.database = database;
 
         this.eta = new Eta();
         this.eta.loadTemplate("@mealPlan", templates.MealPlanV2);
-
-        // this.logpath = plugin.settings.LogPath;
-        // this.recipepath = plugin.settings.RecipePath;
-        // this.recipelog = new RecipeLog(app);
-
-        // this.app = app;
     }
 
     
     // Do the render and assign to the element.
     async renderMealPlan() {
+
+        // await this.database.load();
+        // const cooks = this.database.cooks();
+
+        // console.log(cooks);
 
         // ???????
         const dateStart = DateTime.now().minus({'days': 1});
@@ -59,7 +57,7 @@ export default class MealPlanViewV2 {
         this.container.innerHTML = this.eta.render("@mealPlan", {
             // dates: dates,
             // today: DateTime.now(),
-            // log: this.recipelog,
+            // cooks: cooks,
         });
     }
 
@@ -69,7 +67,6 @@ export default class MealPlanViewV2 {
      **/
     async processMarkdown() {
 
-        // await this.recipelog.read(this.logpath);
         await this.renderMealPlan();
 
         // ???

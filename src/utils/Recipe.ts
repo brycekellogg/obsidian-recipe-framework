@@ -1,35 +1,19 @@
-import {
-    FileManager,
-} from 'utils';
+import FileManager from 'utils/FileManager';
+import Schema      from 'utils/Schema';
 
 import {
     DateTime,
 } from 'luxon';
 
-import { parse as parseYaml } from 'yaml';
-
-import Ajv from 'ajv';
-
+import {
+    parse as parseYaml
+} from 'yaml';
 
 
 /*
  *
  */ 
 export default class Recipe {
-
-    static SCHEMA = {
-        type: 'object',
-        properties: {
-            genre: {
-                type: "array",
-                items: {type: "string"},
-            },
-            locale: {
-                type: "string",
-            }
-        }
-    }
-    static validate = new Ajv().compile(this.SCHEMA);
 
 
     path: string;
@@ -107,7 +91,7 @@ export default class Recipe {
         }
 
         // Validate that it conforms to our schema
-        const validated = Recipe.validate(parsedYaml);
+        const validated = Schema?.getSchema('recipe')?.(parsedYaml);
         if (!validated) {
             this.reason = "invalid frontmatter"
             return;

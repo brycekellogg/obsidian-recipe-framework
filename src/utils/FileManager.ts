@@ -21,6 +21,10 @@ export default class FileManager {
      */
     static init(vault: Vault) {
         this.vault = vault;
+    //     this.vault.on('modify', file => _(file.parent.path).startsWith(this.settings.RecipePath) && this.load());
+    //     this.vault.on('create', file => _(file.parent.path).startsWith(this.settings.RecipePath) && this.load());
+        // TODO: how to handle delete?
+        // TODO: how to handle rename?
     }
 
 
@@ -41,7 +45,16 @@ export default class FileManager {
      * Returns: a list of files corresponding to all the recipes
      *          recursively found under the root folder.
      */
-    // static findFiles(root: TFolder, exts: string[] = []): TFile[] {
+    static findFiles(rootPath: string, exts: string[] = []): string[] {
+    //     const recipePath: string  = this.settings.RecipePath;
+    //     const recipeRoot: TFolder = this.vault.getFolderByPath(recipePath);
+    //     
+    //     const cookPath: string  = this.settings.LogPath;
+    //     const cookRoot: TFolder = this.vault.getFolderByPath(cookPath);
+    //     
+    //     if (recipeRoot == null) throw new Error(`Recipe Path "${recipePath}" not found`);
+    //     if (cookRoot   == null) throw new Error(`Cook Path "${cookPath}" not found`);
+    //     
     //     let fileList: TFile[] = [];
     //     
     //     for (const child: TAbstractFile of root.children) {
@@ -49,8 +62,9 @@ export default class FileManager {
     //         if (child instanceof TFile && exts.includes(child.extension)) fileList = [...fileList, child];
     //     }
     //     
-    //     return fileList;
-    // }
+        // return fileList;
+        return [];
+    }
 
 
     /**
@@ -71,5 +85,27 @@ export default class FileManager {
     //     const contents: string = await this.vault.cachedRead(file);
     //     return contents;
         return "";
+    }
+
+    static async write(path: string, contents: string) {
+
+    }
+
+
+
+    static onModify(root: string, callback: (path: string) => void) {
+
+    }
+    
+    static onCreate(root: string, callback: (path: string) => void) {
+
+    }
+    
+    static onDelete(root: string, callback: (path: string) => void) {
+
+    }
+    
+    static onRename(root: string, callback: (oldPath: string, newPath: string) => void) {
+
     }
 }
