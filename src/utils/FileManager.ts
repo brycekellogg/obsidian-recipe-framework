@@ -46,24 +46,24 @@ export default class FileManager {
      *          recursively found under the root folder.
      */
     static findFiles(rootPath: string, exts: string[] = []): string[] {
-    //     const recipePath: string  = this.settings.RecipePath;
-    //     const recipeRoot: TFolder = this.vault.getFolderByPath(recipePath);
-    //     
-    //     const cookPath: string  = this.settings.LogPath;
-    //     const cookRoot: TFolder = this.vault.getFolderByPath(cookPath);
-    //     
-    //     if (recipeRoot == null) throw new Error(`Recipe Path "${recipePath}" not found`);
-    //     if (cookRoot   == null) throw new Error(`Cook Path "${cookPath}" not found`);
-    //     
-    //     let fileList: TFile[] = [];
-    //     
-    //     for (const child: TAbstractFile of root.children) {
-    //         if (child instanceof TFolder) fileList = [...fileList, ...this.findFiles(child, exts)];
-    //         if (child instanceof TFile && exts.includes(child.extension)) fileList = [...fileList, child];
-    //     }
-    //     
-        // return fileList;
-        return [];
+        const root: TAbstractFile|null = this.vault.getAbstractFileByPath(rootPath);
+
+        // If it's not found, return empty list
+        if (root == null) return [];
+        
+        // If it's a file, return its path unless the extension doesn't match
+        if (root instanceof TFile) {
+            return exts.includes(root.extension) ? [root.path] : [];
+        }
+        
+        let fileList: string[] = [];
+        for (const child of (root as TFolder).children) {
+            fileList = [...fileList, ...this.findFiles(child.path, exts)];
+            // if (child instanceof TFolder) fileList = [...fileList, ...this.findFiles(child.path, exts)];
+            // if (child instanceof TFile && exts.includes(child.extension)) fileList = [...fileList, child.path];
+        }
+
+        return fileList;
     }
 
 
@@ -81,14 +81,20 @@ export default class FileManager {
      *
      */
     static async read(path: string): Promise<string> {
-    //     const file: TFile = this.vault.getFileByPath(path);
-    //     const contents: string = await this.vault.cachedRead(file);
-    //     return contents;
-        return "";
+        const file: TAbstractFile|null = this.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) {
+            const contents: string = await this.vault.cachedRead(file);
+            return contents;
+        } else {
+            return '';
+        }
     }
 
     static async write(path: string, contents: string) {
-
+        const file: TAbstractFile|null = this.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) {
+            this.vault.modify(file, contents);
+        }
     }
 
 

@@ -1,0 +1,12 @@
+<div class="recipe-framework-modal">
+    <div class="recipe-framework-modal-contents">
+        <input type='text'></input>
+        <div class="recipe-framework-modal-list">
+            <ul>
+                <% for (const recipe of it.recipes) { %>
+                    <li data-path="<%= recipe.path %>"><%= recipe.basename %></li>
+                <% } %>
+            </ul>
+        <div>
+    </div>
+</div>

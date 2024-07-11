@@ -1,5 +1,6 @@
 import FileManager from 'utils/FileManager';
 import Recipe      from 'utils/Recipe';
+import RecipeQuery from 'utils/RecipeQuery';
 import Schema      from 'utils/Schema';
 
 import {
@@ -23,7 +24,7 @@ export default class Database {
      * function; the only way to add a Recipe is by creating the
      * corresponding file in Obsidian under the recipeRoot directory.
      * */
-    private recipeMap: Map<string, Recipe> = new Map<string, Recipe>()
+    private static recipeMap: Map<string, Recipe>;
 
     
     /* Data structure for storing cook information.
@@ -39,7 +40,7 @@ export default class Database {
      * doesn't invalidate the cookMap. Instead, each recipeObject needs to
      * be looked up based on the path found in the cookMap.
      */
-    private cookMap: Map<string, string[]> = new Map<string, string[]>();
+    private static cookMap: Map<string, string[]>;
 
     
     /* The Obsidian path to the root folder containing Recipe files.
@@ -47,7 +48,7 @@ export default class Database {
      * All markdown files found recursively under
      * this root folder are considered Recipes.
      */
-    private recipeRoot: string;
+    private static recipeRoot: string;
 
 
     /* The Obsidian path to the cook log file.
@@ -55,8 +56,13 @@ export default class Database {
      * Cooks are all stored in a single file that gets read
      * on load and written to when the cooks are modified.
      */
-    private cookPath:   string;
+    private static cookPath:   string;
 
+    private static cooksLoaded:   boolean;
+    private static recipesLoaded: boolean;
+    
+    private static callbackList: (() => void)[];
+    
 
     /* Construct a new Database object.
      *
@@ -69,22 +75,45 @@ export default class Database {
      *    recipeRoot = the Obsidian path to the Recipe root folder
      *    cookPath   = the Obsidian path to the cook log file
      */
-    constructor(recipeRoot: string, cookPath: string) {
+    static init(recipeRoot: string, cookPath: string) {
         this.recipeRoot = recipeRoot;
         this.cookPath   = cookPath;
 
-        FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
-        FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
-        FileManager.onDelete(this.recipeRoot, (path: string) => {
-            this.deleteRecipe(path);
-        });
-        FileManager.onRename(this.recipeRoot, (oldPath: string, newPath: string) => {
-            this.renameRecipe(oldPath, newPath)
-            this.loadRecipes();
-        });
+        this.recipeMap = new Map<string, Recipe>()
+        this.cookMap   = new Map<string, string[]>();
+
+        this.callbackList = [];
+        this.cooksLoaded = false;
+        this.recipesLoaded = false;
+
+
+        // FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
+        // FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
+        // FileManager.onDelete(this.recipeRoot, (path: string) => {
+        //     this.deleteRecipe(path);
+        // });
+        // FileManager.onRename(this.recipeRoot, (oldPath: string, newPath: string) => {
+        //     this.renameRecipe(oldPath, newPath)
+        //     this.loadRecipes();
+        // });
     }
 
-    
+    static onChange(callback: ()=>void) {
+        this.callbackList.push(callback);
+        if (this.cooksLoaded && this.recipesLoaded) {
+            callback();
+        }
+    }
+
+    static executeCallbacks() {
+        if (this.cooksLoaded && this.recipesLoaded) {
+            for (const callback of this.callbackList) {
+                callback();
+            }
+        }
+    }
+
+
     /* Load recipes from disk.
      *
      * This function gets the list of all the recipe files under the root and
@@ -97,11 +126,11 @@ export default class Database {
      *       modification time and will only reload the file if it is newer
      *       than the last time the Recipe was loaded.
      */
-    async loadRecipes() {
+    static async loadRecipes() {
 
         // Buld a list of recipe files
-        const recipePathList: string[] = FileManager.findFiles(this.recipeRoot, ['md']);
-   
+        const recipePathList: string[] = FileManager.findFiles(Database.recipeRoot, ['md']);
+
         // Populate the recipe database
         for (const recipePath of recipePathList) {
             if (!this.recipeMap.has(recipePath)) {
@@ -113,6 +142,9 @@ export default class Database {
         for (const [path, recipe] of this.recipeMap) {
             await recipe.load();
         }
+
+        this.recipesLoaded = true;
+        this.executeCallbacks();
     }
 
 
@@ -123,10 +155,10 @@ export default class Database {
      * file format is descibed in utils/Schema.ts
      *
      */
-    async loadCooks() {
+    static async loadCooks() {
 
         // Get all the cook contents
-        const contents: string = await FileManager.read(this.cookPath);
+        const contents: string = await FileManager.read(Database.cookPath);
         const cookYaml = parseYaml(contents);
         if (!cookYaml) return;
         
@@ -141,23 +173,26 @@ export default class Database {
                 this.cookMap.get(cookID)?.push(recipePath);
             }
         }
+
+        this.cooksLoaded = true;
+        this.executeCallbacks();
     }
 
 
     /*
      *
      */
-    async writeCooks() {
+    static async writeCooks() {
         this.cookMap = new Map<string, string[]>([...this.cookMap.entries()].sort());
         const contents: string = stringifyYaml(this.cookMap);
-        FileManager.write(this.cookPath, contents);
+        FileManager.write(Database.cookPath, contents);
     }
 
 
     /*
      *
      */
-    renameRecipe(oldPath: string, newPath: string) {
+    static renameRecipe(oldPath: string, newPath: string) {
         for (const [_, recipeList] of this.cookMap) {
             recipeList.forEach((path,i) => {
                 if (path == oldPath) {
@@ -171,7 +206,7 @@ export default class Database {
     /*
      *
      */
-    deleteRecipe(path: string) {
+    static deleteRecipe(path: string) {
         this.recipeMap.delete(path);
     }
 
@@ -180,7 +215,7 @@ export default class Database {
      *
      *
      */
-    cookGetByID(cookID: string): string[]|undefined {
+    static cookGetByID(cookID: string): string[]|undefined {
         return this.cookMap.get(cookID);
     }
 
@@ -188,30 +223,32 @@ export default class Database {
     /*
      *
      */
-    cookAdd(cookID: string, recipePath: string) {
+    static cookAdd(cookID: string, recipePath: string) {
         const recipeList: string[] = this.cookMap.get(cookID) || [];
         recipeList.push(recipePath)
         this.cookMap.set(cookID, recipeList); 
+        this.executeCallbacks();
     }
 
 
     /*
      *
      */
-    cookDrop(cookID: string, recipePath: string) {
+    static cookDrop(cookID: string, recipePath: string) {
         const recipeList: string[]|undefined = this.cookMap.get(cookID)?.filter(path => path != recipePath);
         if (recipeList && recipeList.length) {
             this.cookMap.set(cookID, recipeList);
         } else {
             this.cookMap.delete(cookID);
         }
+        this.executeCallbacks();
     }
 
 
     /*
      *
      */
-    cookCount() {
+    static cookCount() {
         return this.cookMap.size;
     }
 
@@ -219,20 +256,26 @@ export default class Database {
     /*
      *
      */
-    private cookProxyHandlers = {
+    private static cookProxyHandlers = {
         get(target: any, key: string) {
             switch (key) {
                 case 'length': return target.cookCount();
                 default:
-                    const recipeList: string[]|undefined = target.cookGetByID(key);
-                    if (!recipeList) return undefined;
-                    
+                    const recipeList: string[] = target.cookGetByID(key) || [];
                     Reflect.defineProperty(recipeList, 'drop', {value: target.cookDrop.bind(target, key)});
                     Reflect.defineProperty(recipeList, 'add',  {value: target.cookAdd.bind(target, key)});
                     return recipeList;
             }
         },
     };
-    cooks = new Proxy(this as any, this.cookProxyHandlers);
+    static cooks = new Proxy(this as any, this.cookProxyHandlers);
+
+
+    /*
+     *
+     */
+    static get recipes() {
+        return RecipeQuery.new(this.recipeMap);
+    }
 }
 

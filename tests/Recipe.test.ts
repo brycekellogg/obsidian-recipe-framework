@@ -8,6 +8,7 @@ import {
 
 // Configure mocks
 jest.mock('utils/FileManager');
+jest.mock('obsidian', () => {}, {virtual: true});
 const MockFileManager = jest.mocked(FileManager);
 
 

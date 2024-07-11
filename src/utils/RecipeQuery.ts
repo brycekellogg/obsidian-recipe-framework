@@ -1,4 +1,5 @@
 
+import Recipe      from 'utils/Recipe';
 
 /* List format:
  *     [Recipe, Recipe, Recipe]
@@ -10,28 +11,52 @@
  *     }
  * 
  */
-// class RecipeQuery {
-//
-//
-//     // ???
-//     data: [string, RecipeQuery][] | Recipe[];
+export default class RecipeQuery {
+
+    /* This tells typescript that we can use ['key'] stuff
+     * 
+     * https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures
+     */
+    readonly [key: string]: any;
+
+
+    private static proxyHandlers = {
+        get(target: any, key: string) {
+            if (Reflect.has(target, key))      return Reflect.get(target, key);
+
+            switch (key) {
+                case 'length': return target.data.length;  // TODO: this can just be a public readonly variable that gets updated when we change data
+                default: return target.map.get(key) || new Recipe(key);  // needed becsue we can't do this in the template
+            }
+        },
+    };
+
+    static new(recipeMap: Map<string, Recipe>) {
+        const query = new RecipeQuery(recipeMap);
+        return new Proxy(query, this.proxyHandlers);
+    }
+
+    // ???
+    data: [string, RecipeQuery][] | Recipe[];
+    map: Map<string, Recipe>;
+
+
+    /*
+     *
+     */
+    constructor(recipeMap: Map<string, Recipe>) {
+        this.data = Array.from(recipeMap.values());
+        this.map = recipeMap;
+    }
 //
 //
 //     /*
 //      *
 //      */
-//     constructor(data: [string, RecipeQuery][] | Recipe[]) {
-//         this.data = data;
-//     }
-//
-//
-//     /*
-//      *
-//      */
-//     push(r: Recipe) {
+    push(r: string) {
 //         // TODO: check this is a Recipe[]
 //         return this.data.push(r);
-//     }
+    }
 //
 //     
 //     /*
@@ -57,13 +82,13 @@
 //     /*
 //      *
 //      */
-//     [Symbol.iterator]() {
-//
-//         // ???
-//         if (this.data instanceof Array) return this.data[Symbol.iterator]();
-//         // if (this.data instanceof Map)   return this.data[Symbol.iterator]();
-//
-//         // ???
-//         throw new Error("Invalid RecipeQuery");
-//     };
-// }
+    [Symbol.iterator]() {
+
+        // ???
+        if (this.data instanceof Array) return this.data[Symbol.iterator]();
+        // if (this.data instanceof Map)   return this.data[Symbol.iterator]();
+
+        // ???
+        throw new Error("Invalid RecipeQuery");
+    };
+}

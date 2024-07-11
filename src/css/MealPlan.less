@@ -1,0 +1,104 @@
+div.block-language-recipe-mealplan-v2 {
+
+    table {
+        width: 100%;
+
+        td.date {
+            text-wrap: nowrap;
+        }
+        
+        td.meal {
+            width: fit-content;
+        }
+
+        td.cooks {
+            width: 100%;
+            cursor: text;
+        }
+    }
+
+    
+    div.cooks {
+        display: flex;
+        width: 100%;
+        pointer-events: none;  // make "add" clicks target the containing <td> instead.
+
+        a {
+            pointer-events: all;  // enables clicking links because containing div disables them
+        }
+        span.cook {
+            background-color: var(--pill-background);
+            padding: 9px;
+            margin: 2px;
+        }
+
+        span.delete {
+            pointer-events: all;  // enables clicking links because containing div disables them
+            color: var(--pill-color-remove);
+            padding: 2px;
+            margin-left: 2px;
+            cursor: pointer;
+        }
+
+        span.delete:hover {
+            pointer-events: all;  // enables clicking links because containing div disables them
+            color: var(--pill-color-remove-hover);
+        }
+    }
+}
+
+
+//
+// ???
+// 
+div.recipe-framework-modal {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    justify-content: center;
+    align-items: center;  // flex-end on mobile
+    z-index: 50;
+    left: 0;
+    top: 0;
+    background-color: var(--background-modifier-cover);
+
+    // ???
+    div.recipe-framework-modal-contents {
+        background-color: var(--background-primary);
+        border: var(--prompt-border-width) solid var(--prompt-border-color);
+        width: 60%;
+        height: 40%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    // ???
+    input {
+        border: 0;
+    }
+    
+    input:focus {
+        border: 0;
+        box-shadow: none;
+    }
+
+    div.recipe-framework-modal-list {
+        height: 100%;
+        overflow: hidden;
+        overflow-y: scroll;
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+
+            li {
+                padding: 6px 12px 6px 12px;
+            }
+            
+            li.selected {
+                background-color: var(--background-modifier-hover);
+            }
+        }
+    }
+}
