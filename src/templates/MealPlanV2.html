@@ -1,34 +1,26 @@
 <table>
-	
-    <% for (const date of it.dates) { %>
-        <tbody>
-            <% for (const meal of ['Breakfast', 'Lunch', 'Dinner', 'Other']) { %>
-                <tr>
-                    <% let cookID = `${date.toISODate()}[meal=${meal.toLowerCase()}]` %>
-                    <% if (meal == 'Breakfast') { %>
-                        <td class='date' rowspan='4'><%~ date.toFormat('LLL d') %></td>
-                    <% } %>
-                    <td class='meal'><%= meal %></td>
-                    
-                    <td class='cooks' data-cookid='<%= cookID %>'><div class="cooks">
-                        <% for (const recipePath of it.cooks[cookID]) { %>
-                            <span class='cook'><!--
-                            --><a data-href='<%= recipePath %>' href='<%= recipePath %>' class="internal-link" target="_blank" rel="noopener"><%~ it.recipes[recipePath]?.basename %></a><!--
-                            --><span class='delete' data-cookid='<%= cookID %>' data-path='<%= recipePath %>'>&#x2715;</span><!--
+    <tbody>
+        <% for (const date of it.dates) { %>
+            <% const weekStr = date.toLocaleString({weekday: 'short'}) %>
+            <% const dateStr = date.toLocaleString({month: 'short', day: 'numeric'}) %>
+            <% const isoStr  = date.toISODate() %>
+            <% const isToday = +date.startOf('day') === +it.today.startOf('day') %>
+            <% const classToday = isToday ? 'today' : 'not-today' %>
+            <tr class='<%= classToday %>' data-week='<%= weekStr %>'>
+                <td class='date'><%= dateStr %> - <%= weekStr %></td>
+                <td class='cooks' data-date='<%= isoStr %>'><!--
+                --><div class="cooks">
+                        <% for (const recipePath of it.cooks[isoStr]) { %>
+                            <% const recipeName = it.recipes[recipePath]?.basename %>
+                            <span class='cook' data-path='<%= recipePath %>' data-date='<%= isoStr %>'><!--
+                            --><a data-href='<%= recipePath %>' href='<%= recipePath %>' class="internal-link" target="_blank" rel="noopener"><%= recipeName %></a><!--
+                            --><span class='delete' data-date='<%= isoStr %>' data-path='<%= recipePath %>'>&#x2715;</span><!--
                         --></span>
                         <% }%>
-                    </div></td>
-                    
-                </tr>
-            <% } %>
-        </tbody>
-    <% } %>
-
-	<!-- <tbody> -->
-	<!-- 	<tr> -->
-	<!-- 		<td rowspan='1'>Jun 14</td> -->
-	<!-- 		<td colspan='2'>...</td> -->
-	<!-- 	</tr> -->
-	<!-- </tbody> -->
+                    </div><!--
+            --></td>
+            </tr>
+        <% } %>
+    </tbody>
 </table>
 

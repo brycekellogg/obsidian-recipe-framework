@@ -9,10 +9,19 @@ import {
     DateTime,
 } from 'luxon';
 
+type CallbackCreate = (path: string) => void;
+type CallbackModify = (path: string) => void;
+type CallbackDelete = (path: string) => void;
+type CallbackRename = (path: string, oldPath: string) => void;
 
 export default class FileManager {
 
     static vault: Vault;
+
+    static callbacksCreate: Map<string, CallbackCreate[]> = new Map<string, CallbackCreate[]>();
+    static callbacksModify: Map<string, CallbackModify[]> = new Map<string, CallbackModify[]>();
+    static callbacksDelete: Map<string, CallbackDelete[]> = new Map<string, CallbackDelete[]>();
+    static callbacksRename: Map<string, CallbackRename[]> = new Map<string, CallbackRename[]>();
 
 
     /**
@@ -21,14 +30,40 @@ export default class FileManager {
      */
     static init(vault: Vault) {
         this.vault = vault;
-    //     this.vault.on('modify', file => _(file.parent.path).startsWith(this.settings.RecipePath) && this.load());
-    //     this.vault.on('create', file => _(file.parent.path).startsWith(this.settings.RecipePath) && this.load());
-        // TODO: how to handle delete?
-        // TODO: how to handle rename?
+        this.vault.on('create', this.handleCallback.bind(this, this.callbacksCreate));
+        this.vault.on('modify', this.handleCallback.bind(this, this.callbacksModify));
+        this.vault.on('delete', this.handleCallback.bind(this, this.callbacksDelete));
+        this.vault.on('rename', this.handleCallback.bind(this, this.callbacksRename));
     }
 
+    
+    /*
+     *
+     */
+    static onCreate = this.registerCallback.bind(this, this.callbacksCreate);
+    static onRename = this.registerCallback.bind(this, this.callbacksRename);
+    static onModify = this.registerCallback.bind(this, this.callbacksModify);
+    static onDelete = this.registerCallback.bind(this, this.callbacksDelete);
+    static registerCallback(map, root, callback) {
+        map.get(root)?.push(callback) || map.set(root, [callback]);
+    } 
 
-    /**
+    
+    /*
+     *
+     */
+    static handleCallback(callbackMap, file: TFile, oldPath: string) {
+        for (const [path, callbackList] of callbackMap) {
+            if (file.path.startsWith(path)) {
+                for (const callback of callbackList) {
+                    callback(file.path, oldPath);
+                }
+            }
+        }
+    }
+
+     
+    /*
      * Find files.
      *
      * This function examines the children of the root TFolder and either adds
@@ -59,8 +94,6 @@ export default class FileManager {
         let fileList: string[] = [];
         for (const child of (root as TFolder).children) {
             fileList = [...fileList, ...this.findFiles(child.path, exts)];
-            // if (child instanceof TFolder) fileList = [...fileList, ...this.findFiles(child.path, exts)];
-            // if (child instanceof TFile && exts.includes(child.extension)) fileList = [...fileList, child.path];
         }
 
         return fileList;
@@ -98,20 +131,4 @@ export default class FileManager {
     }
 
 
-
-    static onModify(root: string, callback: (path: string) => void) {
-
-    }
-    
-    static onCreate(root: string, callback: (path: string) => void) {
-
-    }
-    
-    static onDelete(root: string, callback: (path: string) => void) {
-
-    }
-    
-    static onRename(root: string, callback: (oldPath: string, newPath: string) => void) {
-
-    }
 }

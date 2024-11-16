@@ -24,7 +24,7 @@ export default class Database {
      * function; the only way to add a Recipe is by creating the
      * corresponding file in Obsidian under the recipeRoot directory.
      * */
-    private static recipeMap: Map<string, Recipe>;
+    private static recipeMap: Map<string, Recipe> = new Map<string, Recipe>();
 
     
     /* Data structure for storing cook information.
@@ -40,7 +40,7 @@ export default class Database {
      * doesn't invalidate the cookMap. Instead, each recipeObject needs to
      * be looked up based on the path found in the cookMap.
      */
-    private static cookMap: Map<string, string[]>;
+    private static cookMap: Map<string, string[]> = new Map<string, string[]>();
 
     
     /* The Obsidian path to the root folder containing Recipe files.
@@ -58,10 +58,10 @@ export default class Database {
      */
     private static cookPath:   string;
 
-    private static cooksLoaded:   boolean;
-    private static recipesLoaded: boolean;
+    private static cooksLoaded:   boolean = false;
+    private static recipesLoaded: boolean = false;
     
-    private static callbackList: (() => void)[];
+    private static callbackList: (() => void)[] = [];
     
 
     /* Construct a new Database object.
@@ -79,23 +79,14 @@ export default class Database {
         this.recipeRoot = recipeRoot;
         this.cookPath   = cookPath;
 
-        this.recipeMap = new Map<string, Recipe>()
-        this.cookMap   = new Map<string, string[]>();
-
-        this.callbackList = [];
-        this.cooksLoaded = false;
-        this.recipesLoaded = false;
-
-
-        // FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
-        // FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
-        // FileManager.onDelete(this.recipeRoot, (path: string) => {
-        //     this.deleteRecipe(path);
-        // });
-        // FileManager.onRename(this.recipeRoot, (oldPath: string, newPath: string) => {
-        //     this.renameRecipe(oldPath, newPath)
-        //     this.loadRecipes();
-        // });
+        FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
+        FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
+        FileManager.onModify(this.cookPath,   () => this.loadCooks());
+        FileManager.onRename(this.recipeRoot, (oldPath: string, newPath: string) => this.renameRecipe(oldPath, newPath));
+        FileManager.onDelete(this.recipeRoot, (path: string) => {
+            this.deleteRecipe(path);
+            this.executeCallbacks();
+        });
     }
 
     static onChange(callback: ()=>void) {
@@ -128,6 +119,8 @@ export default class Database {
      */
     static async loadRecipes() {
 
+        console.log("loading recipes...");
+
         // Buld a list of recipe files
         const recipePathList: string[] = FileManager.findFiles(Database.recipeRoot, ['md']);
 
@@ -157,6 +150,9 @@ export default class Database {
      */
     static async loadCooks() {
 
+        console.log("loading cooks...");
+        this.cookMap = new Map<string, string[]>();
+
         // Get all the cook contents
         const contents: string = await FileManager.read(Database.cookPath);
         const cookYaml = parseYaml(contents);
@@ -164,7 +160,10 @@ export default class Database {
         
         // Validate that the file matches our schema
         const valid = Schema?.getSchema('cooks')?.(cookYaml);
-        if (!valid) return;
+        if (!valid) {
+            console.error("Invalid cook file")
+            return;
+        }
         
         // Add cooks to the database & convert paths to recipes
         for (const cookID in cookYaml) {
@@ -192,7 +191,18 @@ export default class Database {
     /*
      *
      */
-    static renameRecipe(oldPath: string, newPath: string) {
+    static renameRecipe(newPath: string, oldPath: string) {
+
+        // Recipe
+        const oldRecipe: Recipe|undefined = this.recipeMap.get(oldPath);
+        if (oldRecipe) {
+            this.recipeMap.delete(oldPath);
+        }
+        this.recipeMap.set(newPath, new Recipe(newPath));
+        this.recipeMap.get(newPath).load();
+
+        
+        // Cooks
         for (const [_, recipeList] of this.cookMap) {
             recipeList.forEach((path,i) => {
                 if (path == oldPath) {
@@ -200,6 +210,9 @@ export default class Database {
                 }
             });
         }
+
+        this.writeCooks();
+        this.executeCallbacks();
     }
 
     

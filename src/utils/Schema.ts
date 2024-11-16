@@ -15,7 +15,7 @@ const SCHEMA_COOKS = {
     type: 'object',
     additionalProperties: false,
     patternProperties: {
-        '^[0-9]{4}-[0-9]{2}-[0-9]{2}\\[meal=.+\\]$': { // TODO: make schema check meal is a valid meal
+        '^[0-9]{4}-[0-9]{2}-[0-9]{2}$': {
             type: 'array',
             items: {
                 type: 'string',

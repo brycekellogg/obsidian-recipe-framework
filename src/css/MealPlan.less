@@ -3,33 +3,59 @@ div.block-language-recipe-mealplan-v2 {
     table {
         width: 100%;
 
-        td.date {
-            text-wrap: nowrap;
-        }
-        
-        td.meal {
-            width: fit-content;
+        // ???
+        tr.today {
+            // background-color: rgba(var(--color-green-rgb), 0.05);
+            td.date {
+                font-weight: var(--font-bold);
+                color: var(--text-normal);
+            }
         }
 
+        tr {
+            overflow: hidden;
+        }
+        
+        // 
+        td.date {
+            height: 2.5em;
+            text-wrap: nowrap;
+            user-select: none;  // no need to select date text
+            color: var(--text-muted);
+        }
+            
+
+        //
         td.cooks {
             width: 100%;
             cursor: text;
+            background-color: transparent !important;  // just use the row background color
+            padding-right: 3em;
         }
     }
 
     
+    // This is the DIV that holds the list of cooks in each table row
     div.cooks {
         display: flex;
+        flex-direction: row;
         width: 100%;
         pointer-events: none;  // make "add" clicks target the containing <td> instead.
 
         a {
             pointer-events: all;  // enables clicking links because containing div disables them
         }
+
         span.cook {
             background-color: var(--pill-background);
-            padding: 9px;
+            padding-top:    4px;
+            padding-bottom: 4px;
+            padding-left:   9px;
+            padding-right:  9px;
             margin: 2px;
+            border-radius: 14px;  // for rounded corners
+            white-space: nowrap;
+            width: fit-content;
         }
 
         span.delete {
