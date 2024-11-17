@@ -9,11 +9,24 @@ import {
     DateTime,
 } from 'luxon';
 
+
+// 
 type CallbackCreate = (path: string) => void;
 type CallbackModify = (path: string) => void;
 type CallbackDelete = (path: string) => void;
 type CallbackRename = (path: string, oldPath: string) => void;
+type CallbackAny = CallbackCreate | CallbackModify | CallbackDelete | CallbackRename;
 
+
+/**
+ * A helper class that provides abstractions for dealing with files.
+ *
+ * - finding files
+ * - reading files
+ * - writing files
+ * - getting file metadata
+ * - providing callbacks on file events
+ */
 export default class FileManager {
 
     static vault: Vault;
@@ -44,7 +57,7 @@ export default class FileManager {
     static onRename = this.registerCallback.bind(this, this.callbacksRename);
     static onModify = this.registerCallback.bind(this, this.callbacksModify);
     static onDelete = this.registerCallback.bind(this, this.callbacksDelete);
-    static registerCallback(map, root, callback) {
+    static registerCallback(map: Map<string, CallbackAny[]>, root: string, callback: CallbackAny) {
         map.get(root)?.push(callback) || map.set(root, [callback]);
     } 
 
@@ -52,7 +65,7 @@ export default class FileManager {
     /*
      *
      */
-    static handleCallback(callbackMap, file: TFile, oldPath: string) {
+    static handleCallback(callbackMap: Map<string, CallbackAny[]>, file: TFile, oldPath: string) {
         for (const [path, callbackList] of callbackMap) {
             if (file.path.startsWith(path)) {
                 for (const callback of callbackList) {
@@ -123,12 +136,15 @@ export default class FileManager {
         }
     }
 
+
+    /**
+     *
+     *
+     */
     static async write(path: string, contents: string) {
         const file: TAbstractFile|null = this.vault.getAbstractFileByPath(path);
         if (file instanceof TFile) {
             this.vault.modify(file, contents);
         }
     }
-
-
 }

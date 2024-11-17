@@ -2,6 +2,7 @@
 
 ## Building
 ```
+npm run test
 npm run all
 ```
 

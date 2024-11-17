@@ -24,7 +24,7 @@ export default class Database {
      * function; the only way to add a Recipe is by creating the
      * corresponding file in Obsidian under the recipeRoot directory.
      * */
-    private static recipeMap: Map<string, Recipe> = new Map<string, Recipe>();
+    private static recipeMap: Map<string, Recipe>;
 
     
     /* Data structure for storing cook information.
@@ -40,7 +40,7 @@ export default class Database {
      * doesn't invalidate the cookMap. Instead, each recipeObject needs to
      * be looked up based on the path found in the cookMap.
      */
-    private static cookMap: Map<string, string[]> = new Map<string, string[]>();
+    private static cookMap: Map<string, string[]>;
 
     
     /* The Obsidian path to the root folder containing Recipe files.
@@ -78,6 +78,9 @@ export default class Database {
     static init(recipeRoot: string, cookPath: string) {
         this.recipeRoot = recipeRoot;
         this.cookPath   = cookPath;
+
+        this.recipeMap = new Map<string, Recipe>();
+        this.cookMap   = new Map<string, string[]>();
 
         FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
         FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
@@ -161,7 +164,7 @@ export default class Database {
         // Validate that the file matches our schema
         const valid = Schema?.getSchema('cooks')?.(cookYaml);
         if (!valid) {
-            console.error("Invalid cook file")
+            console.error(`Invalid cook file: ${Database.cookPath}`)
             return;
         }
         
@@ -191,7 +194,7 @@ export default class Database {
     /*
      *
      */
-    static renameRecipe(newPath: string, oldPath: string) {
+    static renameRecipe(oldPath: string, newPath: string) {
 
         // Recipe
         const oldRecipe: Recipe|undefined = this.recipeMap.get(oldPath);
@@ -199,7 +202,7 @@ export default class Database {
             this.recipeMap.delete(oldPath);
         }
         this.recipeMap.set(newPath, new Recipe(newPath));
-        this.recipeMap.get(newPath).load();
+        this.recipeMap.get(newPath)?.load();
 
         
         // Cooks

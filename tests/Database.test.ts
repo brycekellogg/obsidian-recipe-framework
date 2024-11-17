@@ -166,7 +166,7 @@ test("load cooks correct schema", async () => {
     Database.init('', '');
 
     MockFileManager.read.mockResolvedValueOnce(`
-        2024-06-29[meal=dinner]: 
+        2024-06-29:
             - parent/child0.md
             - parent/child1.md
     `)
@@ -176,9 +176,9 @@ test("load cooks correct schema", async () => {
     expect(MockFileManager.read).toHaveBeenCalledTimes(1);
     expect(Database.cookCount()).toBe(1);
     expect(Database.cookGetByID('test')).toBe(undefined);
-    expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.length).toBe(2);
-    expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.at(0)).toBe('parent/child0.md');
-    expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.at(1)).toBe('parent/child1.md');
+    expect(Database.cookGetByID('2024-06-29')?.length).toBe(2);
+    expect(Database.cookGetByID('2024-06-29')?.at(0)).toBe('parent/child0.md');
+    expect(Database.cookGetByID('2024-06-29')?.at(1)).toBe('parent/child1.md');
 })
 
 
@@ -233,6 +233,8 @@ test("rename recipe", async () => {
     expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.at(0)).toBe('parent/child6.md');
     expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.at(1)).toBe('parent/child2.md');
     expect(Database.cookGetByID('2024-06-29[meal=dinner]')?.at(2)).toBe('parent/child3.md');
+
+    // TODO: check recipes to make sure it's renamed in the recipeMap
 });
 
 
