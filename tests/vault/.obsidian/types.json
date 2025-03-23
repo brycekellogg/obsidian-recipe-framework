@@ -1,0 +1,14 @@
+{
+  "types": {
+    "aliases": "aliases",
+    "cssclasses": "multitext",
+    "tags": "tags",
+    "dates": "multitext",
+    "gluten-free": "checkbox",
+    "glutenFree": "number",
+    "genres": "multitext",
+    "equipment": "multitext",
+    "vegan": "number",
+    "genre": "multitext"
+  }
+}

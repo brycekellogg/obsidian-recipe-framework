@@ -1,0 +1,40 @@
+<!--
+  -- Month View
+  --   - 
+  -- Week View
+  -- Day View
+  -- Schedule View (current v2 implementation)
+
+-->
+
+
+<% const monthStart = it.today.startOf('month').weekday - 1 %>
+<% const monthEnd   = it.today.endOf('month').day + monthStart - 1 %>
+
+<div>
+    <div class='month-view'>
+        <div class='title'>December 2024</div>
+        <% for (const week of [0,1,2,3,4,5]) { %>
+            <div class='week'>
+                <% for (const weekday of [0,1,2,3,4,5,6]) { %>
+                    <div class='day'>
+                        <% const calendarIndex = week*7+weekday %>
+                        <% if (calendarIndex >= monthStart && calendarIndex <= monthEnd) { %>                        
+                            <% const date = it.today.startOf('month').plus({'days': calendarIndex-monthStart}) %>
+                            <% const isoStr  = date.toISODate() %>
+                            <%= calendarIndex - monthStart + 1 %>
+                            <div class="cooks">
+                                <% for (const recipePath of it.cooks[isoStr]) { %>
+                                    <% const recipeName = it.recipes[recipePath]?.basename %>
+                                    <a data-href='<%= recipePath %>' href='<%= recipePath %>' class="internal-link" target="_blank" rel="noopener"><%= recipeName %></a>
+                                <% }%>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
+</div>
+</div>
+
+

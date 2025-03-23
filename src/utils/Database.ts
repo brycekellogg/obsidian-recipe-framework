@@ -1,66 +1,85 @@
+
+
+import * as sql from 'sql';
 import FileManager from 'utils/FileManager';
-import Recipe      from 'utils/Recipe';
-import RecipeQuery from 'utils/RecipeQuery';
-import Schema      from 'utils/Schema';
 
 import {
-    parse as parseYaml,
-    stringify as stringifyYaml,
-} from 'yaml';
+    Database as SqliteDatabase
+} from '@sqlite.org/sqlite-wasm';
+
+
+
+/* Make this global so the Database & DatabaseQuery classes can both use it.
+ *
+ */
+let db: SqliteDatabase;
 
 
 /*
+ *
  */
-export default class Database {
+export interface Recipe {
+    filepath:    string;
+    name:        string;
+    locale?:     string;
+    makes?:      string;
+    preptime?:   string;
+    cooktime?:   string;
+    vegan?:      string;
+    vegetarian?: string;
+    glutenfree?: string;
+    cookdates:   string[];
+    genre?:      string[];
+    equip?:      string[];
 
-    
-    /* Data structure for storing Recipes.
-     *
-     * Each Recipe is uniquely identified by its full path, which acts as
-     * the key into our recipeMap. Recipes paths genreally look something
-     * like: "Food/Recipes/Gilled Chicken.md"
-     *
-     * This data scructure is only ever written to by the loadRecipes()
-     * function; the only way to add a Recipe is by creating the
-     * corresponding file in Obsidian under the recipeRoot directory.
-     * */
-    private static recipeMap: Map<string, Recipe>;
+}
 
-    
-    /* Data structure for storing cook information.
+
+
+interface RecipeTable {
+    filepath:   string;
+    name:       string;
+    locale:     string;
+    makes:      string;
+    prepTime:   string;
+    cookTime:   string;
+    vegan:      boolean;
+    vegetarian: boolean;
+    glutenfree: boolean;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+ * 
+ *
+ * How to use:
+ * 
+ * Needs to be called on obsidian "layout-ready" event.
+ *
+ * Database.init("Food/Recipes/", "Food/Logs/Cooks.yaml");
+ * Database.loadRecipes();
+ * Database.loadCooks();
+ * 
+ * 
+ */
+export class Database {
+
+
+    /*
      *
-     * Each cook is uniquely identified by the date & meal that it
-     * corresponds to. The key into the cookMap consists of a date in
-     * RFC 9557 format with the additional "meal" tag. Cook IDs generally 
-     * look something like: "2024-06-29[meal=dinner]" with supported meals
-     * being ["breakfast", "lunch", "dinner", "other"].
-     *
-     * Each value in the cookMap consists of a list of Recipe paths. We use
-     * paths instead of Recipe objects so that a refresh of the recipeMap
-     * doesn't invalidate the cookMap. Instead, each recipeObject needs to
-     * be looked up based on the path found in the cookMap.
      */
-    private static cookMap: Map<string, string[]>;
-
-    
-    /* The Obsidian path to the root folder containing Recipe files.
-     *
-     * All markdown files found recursively under
-     * this root folder are considered Recipes.
-     */
-    private static recipeRoot: string;
-
-
-    /* The Obsidian path to the cook log file.
-     *
-     * Cooks are all stored in a single file that gets read
-     * on load and written to when the cooks are modified.
-     */
-    private static cookPath:   string;
-
-    private static cooksLoaded:   boolean = false;
-    private static recipesLoaded: boolean = false;
-    
     private static callbackList: (() => void)[] = [];
     
 
@@ -75,223 +94,362 @@ export default class Database {
      *    recipeRoot = the Obsidian path to the Recipe root folder
      *    cookPath   = the Obsidian path to the cook log file
      */
-    static init(recipeRoot: string, cookPath: string) {
-        this.recipeRoot = recipeRoot;
-        this.cookPath   = cookPath;
+    static async init(recipeRoot: string, sqlite3: any) {
 
-        this.recipeMap = new Map<string, Recipe>();
-        this.cookMap   = new Map<string, string[]>();
+        // Initialize the database
+        db = new sqlite3.oo1.DB('/mydb.sqlite3', 'c');
+        db.exec(sql.create);
 
-        FileManager.onCreate(this.recipeRoot, () => this.loadRecipes());
-        FileManager.onModify(this.recipeRoot, () => this.loadRecipes());
-        FileManager.onModify(this.cookPath,   () => this.loadCooks());
-        FileManager.onRename(this.recipeRoot, (oldPath: string, newPath: string) => this.renameRecipe(oldPath, newPath));
-        FileManager.onDelete(this.recipeRoot, (path: string) => {
-            this.deleteRecipe(path);
-            this.executeCallbacks();
+        FileManager.onCreate(recipeRoot, this.onCreate.bind(this));
+        FileManager.onRename(recipeRoot, this.onRename.bind(this));
+        FileManager.onModify(recipeRoot, this.onModify.bind(this));
+        FileManager.onDelete(recipeRoot, this.onDelete.bind(this));
+    }
+
+
+    /**
+     * Callback function to update the database when a recipe file is created.
+     *
+     * Note this also gets called on vault load and so it is used to fill
+     * the database on startup as well.
+     */
+    static async onCreate(path: string) {
+        console.debug(`Loading ${path}`)
+
+        const frontMatter = await FileManager.readFrontmatter(path);
+
+        // Insert the row corresponding to the recipe in the Recipes table
+        this.insertRecipe(path, frontMatter);
+
+        // Add values to the link tables that we find in frontmatter
+        this.insertCooks(path,  frontMatter['dates']);
+        this.insertGenres(path, frontMatter['genres']);
+        this.insertEquip(path,  frontMatter['equipment']);
+
+        // Notify listeners of changed database
+        this.executeCallbacks();
+    }
+
+
+    /*
+     *
+     */
+    static async onRename(path: string, oldPath: string) {
+        console.debug(`Renaming ${oldPath} to ${path}`)
+        this.onDelete(oldPath);
+        this.onCreate(path);
+
+        this.executeCallbacks();
+    }
+
+
+    /*
+     *
+     */
+    static async onModify(path: string) {
+        console.debug(`Updating ${path}`)
+
+        const frontMatter = await FileManager.readFrontmatter(path);
+
+        // Replace the row corresponding to the recipe in the Recipes table
+        this.insertRecipe(path, frontMatter);
+
+        // Add values to the link tables that we find in frontmatter
+        this.insertCooks(path,  frontMatter['dates']);
+        this.insertGenres(path, frontMatter['genres']);
+        this.insertEquip(path,  frontMatter['equipment']);
+
+        // Delete values from link tables that are no longer present in frontmatter
+        this.deleteCooks(path,  frontMatter['dates']);
+        this.deleteGenres(path, frontMatter['genres']);
+        this.deleteEquip(path,  frontMatter['equipment']);
+
+        // Notify listeners of changed database
+        this.executeCallbacks();
+    }
+
+
+    /*
+     *
+     */
+    static async onDelete(path: string) {
+        console.debug(`Deleting ${path}`)
+        this.deleteCooks(path);
+        this.deleteGenres(path);
+        this.deleteEquip(path);
+
+        db.exec({
+            sql: `
+                DELETE FROM Recipes
+                WHERE filepath = $recipe;
+            `,
+            bind: {$recipe: path}
+        })
+
+        this.executeCallbacks();
+    }
+
+
+    static async insertRecipe(path: string, frontMatter: any) {
+        db.exec({
+            sql: `
+                INSERT OR REPLACE INTO Recipes (
+                    filepath,
+                    name,
+                    locale,
+                    makes,
+                    preptime,
+                    cooktime,
+                    vegan,
+                    vegetarian,
+                    glutenfree
+                ) VALUES (
+                    $filepath,
+                    $name,
+                    $locale,
+                    $makes,
+                    $preptime,
+                    $cooktime,
+                    $vegan,
+                    $vegetarian,
+                    $glutenfree
+                );`,
+            bind: {
+                $filepath: path,
+                $name:     path.substring(1+path.lastIndexOf('/'),path.lastIndexOf('.')),
+                $locale:     frontMatter['locale']     ?? null,
+                $makes:      frontMatter['makes']      ?? null,
+                $preptime:   frontMatter['prep time']  ?? null,
+                $cooktime:   frontMatter['cook time']  ?? null,
+                $vegan:      frontMatter['vegan']      ?? null,
+                $vegetarian: frontMatter['vegetarian'] ?? null,
+                $glutenfree: frontMatter['glutenfree'] ?? null,
+            }
+        });
+        
+    }
+
+
+    /*
+     *
+     */
+    static insertCooks  = this.insertLinkTable.bind(this, 'Cooks');
+    static insertGenres = this.insertLinkTable.bind(this, 'Genres');
+    static insertEquip  = this.insertLinkTable.bind(this, 'Equip');
+    static async insertLinkTable(table: 'Cooks'|'Genres'|'Equip', path: string, values: string[]|undefined) {
+
+        // Don't insert anything if the values are empty/undefined
+        if (!values || values.length == 0) return;
+
+        // Assign the column name based on the table name
+        let column: string;
+        switch (table) {
+            case 'Cooks':  column = 'cookdate'; break;
+            case 'Genres': column = 'genre';    break;
+            case 'Equip':  column = 'equip';    break;
+        }
+
+        // Sqlite uses the ? character to denote a positional parameter that can be bound
+        // to using the "bind" option in db.exec(...). For each row we are inserting (one
+        // for each value passed in), we need two ? characters (path & value column).
+        const binds = Array(values.length).fill('(?, ?)').join(',');
+
+        // The values that we bind to the ? positional parameters need to be in an array
+        // where they get bound to the question marks in the order they show up in the array.
+        // We use the reduce function to get an alternating patter of path, value, etc.
+        values = values.reduce((acc: string[], value: string) => [...acc, path, value], [])
+
+        // Execute the SQL statement, using a Javascript template literal string
+        // to fill in the table name & column name, and SQLite bind parameters
+        // to fill in the actual values.
+        db.exec({
+            sql: `
+                INSERT OR IGNORE INTO ${table} (
+                    recipe,
+                    ${column}
+                ) VALUES ${binds};`,
+            bind: values
         });
     }
 
-    static onChange(callback: ()=>void) {
-        this.callbackList.push(callback);
-        if (this.cooksLoaded && this.recipesLoaded) {
-            callback();
-        }
-    }
-
-    static executeCallbacks() {
-        if (this.cooksLoaded && this.recipesLoaded) {
-            for (const callback of this.callbackList) {
-                callback();
-            }
-        }
-    }
-
-
-    /* Load recipes from disk.
-     *
-     * This function gets the list of all the recipe files under the root and
-     * saves them into the recipeMap. Once the recipeMap is fully populated,
-     * each recipe is loaded via the Recipe.load() function; the function
-     * waits for all Recipes to complete loading before returning.
-     *
-     * Note: this will only add new recipes if they didn't already exist in
-     *       the recipeMap. The Recipe.load() function checks the file
-     *       modification time and will only reload the file if it is newer
-     *       than the last time the Recipe was loaded.
-     */
-    static async loadRecipes() {
-
-        console.log("loading recipes...");
-
-        // Buld a list of recipe files
-        const recipePathList: string[] = FileManager.findFiles(Database.recipeRoot, ['md']);
-
-        // Populate the recipe database
-        for (const recipePath of recipePathList) {
-            if (!this.recipeMap.has(recipePath)) {
-                this.recipeMap.set(recipePath, new Recipe(recipePath));
-            }
-        }
-
-        // Have all the recipes load their data
-        for (const [path, recipe] of this.recipeMap) {
-            await recipe.load();
-        }
-
-        this.recipesLoaded = true;
-        this.executeCallbacks();
-    }
 
 
     /*
-     * Load cooks from disk.
-     *
-     *
-     * file format is descibed in utils/Schema.ts
      *
      */
-    static async loadCooks() {
+    static deleteCooks  = this.deleteLinkTable.bind(this, 'Cooks');
+    static deleteGenres = this.deleteLinkTable.bind(this, 'Genres');
+    static deleteEquip  = this.deleteLinkTable.bind(this, 'Equip');
+    static async deleteLinkTable(table: 'Cooks'|'Genres'|'Equip', path: string, values: string[]|undefined = undefined) {
+       
+        // If the values are undefined or empty, that means we want
+        // to delete everything. Using an empty array for values will
+        // cause the WHERE clause to match all the corresponding rows.
+        if (!values) values = [];
 
-        console.log("loading cooks...");
-        this.cookMap = new Map<string, string[]>();
+        // Assign the column name based on the table name
+        let column: string;
+        switch (table) {
+            case 'Cooks':  column = 'cookdate'; break;
+            case 'Genres': column = 'genre';    break;
+            case 'Equip':  column = 'equip';    break;
+        }
 
-        // Get all the cook contents
-        const contents: string = await FileManager.read(Database.cookPath);
-        const cookYaml = parseYaml(contents);
-        if (!cookYaml) return;
+        // Sqlite uses the ? character to denote a positional parameter that can be bound
+        // to using the "bind" option in db.exec(...). For each value we don't want to
+        // delete, we need to include a ? character so we can match it in the WHERE clause.
+        const binds = Array(values.length).fill('?').join(',');
         
-        // Validate that the file matches our schema
-        const valid = Schema?.getSchema('cooks')?.(cookYaml);
-        if (!valid) {
-            console.error(`Invalid cook file: ${Database.cookPath}`)
-            return;
-        }
-        
-        // Add cooks to the database & convert paths to recipes
-        for (const cookID in cookYaml) {
-            this.cookMap.set(cookID, []);
-            for (const recipePath of cookYaml[cookID]) {
-                this.cookMap.get(cookID)?.push(recipePath);
-            }
-        }
-
-        this.cooksLoaded = true;
-        this.executeCallbacks();
+        // Execute the SQL statement, using a Javascript template literal string
+        // to fill in the table name & column name, and SQLite bind parameters
+        // to fill in the values to not delete.
+        db.exec({
+            sql: `
+                DELETE FROM ${table}
+                WHERE recipe = ?
+                AND ${column} NOT IN (${binds});`,
+            bind: [path, ...values]
+        });
     }
-
-
-    /*
-     *
-     */
-    static async writeCooks() {
-        this.cookMap = new Map<string, string[]>([...this.cookMap.entries()].sort());
-        const contents: string = stringifyYaml(this.cookMap);
-        FileManager.write(Database.cookPath, contents);
-    }
-
-
-    /*
-     *
-     */
-    static renameRecipe(oldPath: string, newPath: string) {
-
-        // Recipe
-        const oldRecipe: Recipe|undefined = this.recipeMap.get(oldPath);
-        if (oldRecipe) {
-            this.recipeMap.delete(oldPath);
-        }
-        this.recipeMap.set(newPath, new Recipe(newPath));
-        this.recipeMap.get(newPath)?.load();
-
-        
-        // Cooks
-        for (const [_, recipeList] of this.cookMap) {
-            recipeList.forEach((path,i) => {
-                if (path == oldPath) {
-                    recipeList[i] = newPath;
-                }
-            });
-        }
-
-        this.writeCooks();
-        this.executeCallbacks();
-    }
-
-    
-    /*
-     *
-     */
-    static deleteRecipe(path: string) {
-        this.recipeMap.delete(path);
-    }
-
-    
-    /*
-     *
-     *
-     */
-    static cookGetByID(cookID: string): string[]|undefined {
-        return this.cookMap.get(cookID);
-    }
-
-
-    /*
-     *
-     */
-    static cookAdd(cookID: string, recipePath: string) {
-        const recipeList: string[] = this.cookMap.get(cookID) || [];
-        recipeList.push(recipePath)
-        this.cookMap.set(cookID, recipeList); 
-        this.executeCallbacks();
-    }
-
-
-    /*
-     *
-     */
-    static cookDrop(cookID: string, recipePath: string) {
-        const recipeList: string[]|undefined = this.cookMap.get(cookID)?.filter(path => path != recipePath);
-        if (recipeList && recipeList.length) {
-            this.cookMap.set(cookID, recipeList);
-        } else {
-            this.cookMap.delete(cookID);
-        }
-        this.executeCallbacks();
-    }
-
-
-    /*
-     *
-     */
-    static cookCount() {
-        return this.cookMap.size;
-    }
-
-    
-    /*
-     *
-     */
-    private static cookProxyHandlers = {
-        get(target: any, key: string) {
-            switch (key) {
-                case 'length': return target.cookCount();
-                default:
-                    const recipeList: string[] = target.cookGetByID(key) || [];
-                    Reflect.defineProperty(recipeList, 'drop', {value: target.cookDrop.bind(target, key)});
-                    Reflect.defineProperty(recipeList, 'add',  {value: target.cookAdd.bind(target, key)});
-                    return recipeList;
-            }
-        },
-    };
-    static cooks = new Proxy(this as any, this.cookProxyHandlers);
 
 
     /*
      *
      */
     static get recipes() {
-        return RecipeQuery.new(this.recipeMap);
+        return new RecipeQuery();
+    }
+
+    static save(recipe) {
+        FileManager.writeFrontmatter(recipe.filepath, {
+            genres: recipe.genre,
+            locale: recipe.locale,
+            makes: recipe.makes,
+            preptime: recipe.preptime,
+            cooktime: recipe.cooktime,
+            vegan: recipe.vegan,
+            vegetarian: recipe.vegetarian,
+            glutenfree: recipe.glutenfree,
+            dates: recipe.cookdates,
+
+        })
+    }
+
+
+    /*
+     *
+     */
+    static onChange(callback: ()=>void) {
+        this.callbackList.push(callback);
+    }
+
+
+    /*
+     *
+     */
+    static executeCallbacks() {
+        for (const callback of this.callbackList) {
+            callback();
+        }
     }
 }
 
+
+
+interface QueryFilters {
+    cookdate?:   string;
+    cookdate__lt?:   string;
+    cookdate__gt?:   string;
+    cookdate__ge?:   string;
+    cookdate__le?:   string;
+    cookdate__ne?:   string;
+    vegan?:      boolean;
+    vegetarian?: boolean;
+}
+
+/* A class for querying Recipes from the database.
+ *
+ * Examples:
+ *    - Recipe.objects.all()
+ *    - Recipe.objects.filter({cookdate: '2024-01-01'}).get()
+ *
+ * TODO:
+ *    - add exclude
+ *    - add orderBy
+ *    - add groupBy
+ */
+export class RecipeQuery {
+
+
+    private filterFields: QueryFilters[];
+
+
+    constructor(fields: QueryFilters[]|null = null) {
+        this.filterFields = fields || [];
+    }
+
+    filter(fields: {}): RecipeQuery {
+        return new RecipeQuery([...this.filterFields, fields]);
+    }
+
+
+    all(): Recipe[] {
+        return this.query();
+    }
+
+    get(): Recipe|null {
+        return this.query().first() || null;
+    }
+
+
+    /*
+     *
+     */
+    private query(): Recipe[] {
+
+        // TODO: add handling for less than, etc
+        // TODO: add checking of filter fields (maybe via interface?)
+        const clauses: string[] = [];
+        for (const f of this.filterFields) {
+            for (let [key,value] of Object.entries(f)) {
+                if (typeof(value) === "boolean") value = 1;
+                clauses.push(`${key} = '${value}'`);
+            }
+        }
+
+        const where = clauses.join(' AND ') || '1';
+        const replacements = {
+            where: where,
+        };
+
+        let resultRows:RecipeTable[] = [];
+        db.exec({
+            sql: processTemplate(sql.get, replacements),
+            rowMode: 'object',
+            resultRows: resultRows as {}[],
+        })
+
+        // return resultRows.map(_ => {
+        //     return new Recipe(_.filepath);
+        // });
+        return resultRows.map(recipe => {
+            recipe['cookdates'] = JSON.parse(recipe['cookdates']);
+            recipe['genres']    = JSON.parse(recipe['genres']);
+            recipe['equip']     = JSON.parse(recipe['equip']);
+            return recipe;
+        });
+    }
+
+
+}
+
+/* A helper function
+ *
+ */
+function processTemplate(query: string, replacements: {[key: string]: string}) {
+    return query.replace(/{(\w+)}/g,
+        (placeholderWithDelimiters: string, placeholderWithoutDelimiters: string): string => {
+            return replacements.hasOwnProperty(placeholderWithoutDelimiters) ? 
+            replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters
+        })
+}

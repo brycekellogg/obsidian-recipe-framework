@@ -1,29 +1,62 @@
-/*
+// @import "MiseEnPlace";
+// @import "Index";
+// @import "MealPlan";
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+div.recipe-select {
+    background-color: var(--background-modifier-cover);;
+    position: fixed;
+    z-index: 100;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;  // flex-end on mobile
 
-If your plugin does not need CSS, delete this file.
+    div.recipe-select-contents {
+        background-color: var(--background-primary);
+        display: flex;
+        flex-direction: column;
+        width: 90%;
+        height: 70%;
+        margin: auto;
+        justify-content: flex-start;
+        align-items: flex-start;  // flex-end on mobile
+    }
 
-*/
+    input {
+        width: 100%;
+    }
 
-@import "MiseEnPlace";
-@import "Index";
-@import "MealPlan";
+    div.recipe-select-list {
+        height: 100%;
+        width: 100%;
+    }
 
-div.meal-plan-recipe-list {
-	display: flex;
-	padding-right: 20px;
+    li.selected {
+        background-color: var(--background-modifier-hover);
+    }
 }
 
-td.meal-plan-recipe-list {
-	cursor: text;
-}
 
 
 
 
-.markdown-rendered tbody tr.today,
-.markdown-rendered tbody tr.today > td {
-	// border-top: solid var(--interactive-accent);
-}
+
+// div.meal-plan-recipe-list {
+// 	display: flex;
+// 	padding-right: 20px;
+// }
+//
+// td.meal-plan-recipe-list {
+// 	cursor: text;
+// }
+//
+//
+//
+//
+// .markdown-rendered tbody tr.today,
+// .markdown-rendered tbody tr.today > td {
+// 	// border-top: solid var(--interactive-accent);
+// }

@@ -1,3 +1,115 @@
+
+div.block-language-recipe-mealplan-v3 {
+
+    // The container for the header.
+    div.header {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-between;
+        align-items: center;
+
+        // Contains the title & forward/backward buttons
+        div {
+            display: flex;
+            flex-flow: row nowrap;
+            align-items: center;
+            font-size: 24px;
+            text-align: center;
+            color: var(--text-faint);
+        }
+
+        // All the icons that are actually buttons
+        svg {
+            cursor: pointer;
+        }
+    }
+
+    // The top level container for the meal plan
+    // month view. It should deploy elements in
+    // a top down column view.
+    div.month-view {
+        display: flex;
+        flex-flow: column nowrap;
+
+
+        // The container for the calendar days
+        div.calendar {
+            display: grid;
+            background-color: var(--text-faint);
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        div.week {
+            display: flex;
+            flex-flow: column nowrap;
+            align-items: center;
+            // margin-left: 1px;
+            color: var(--text-faint);
+            background-color: var(--background-primary);
+
+        }
+
+        // ???
+        div.day {
+            display: flex;
+            flex-flow: column nowrap;
+            background-color: var(--background-primary);
+
+            flex-grow: 1;
+            flex-basis: 0;
+            height: 100px;
+            margin-left: 1px;
+            margin-top: 1px;
+
+            // border: solid black;
+            // border-width: 2px;
+            // margin-left: -$border-width;
+            // margin-top: -$border-width;
+            padding-top: 1px;
+            overflow: hidden;
+
+
+            a.day-link {
+                margin-left:  40%;
+                margin-right: 40%;
+                margin-top: 0px;
+                font-size: 14px;
+                text-align: center;
+                white-space: nowrap;
+                color: var(--text-faint);
+            }
+
+            a.recipe-link {
+                white-space: nowrap;
+                font-size: 11px;
+                background-color: var(--pill-background);
+                padding-left: 2px;
+                padding-right: 9px;  // doesn't do anything currently
+                border-radius: 5px;
+                margin-bottom: 2px;
+                margin-right: 4px;
+                overflow: hidden;
+            }
+        }
+
+        div.day:nth-child(7n-6) {
+            margin-left: 0;
+        }
+
+        div.day[data-today="true"] a.day-link {
+            background: var(--color-blue);
+            color: black;
+            border-radius: 10px;
+        }
+    }
+
+
+    div.week-view {
+
+    }
+}
+
+
 div.block-language-recipe-mealplan-v2 {
 
     table {
@@ -76,7 +188,8 @@ div.block-language-recipe-mealplan-v2 {
 
 //
 // ???
-// 
+//
+
 div.recipe-framework-modal {
     display: none;
     width: 100%;

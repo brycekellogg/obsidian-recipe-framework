@@ -2,6 +2,8 @@ import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
 import inlineImportPlugin from 'esbuild-plugin-inline-import';
+import fs from 'node:fs'
+
 
 const banner =
 `/*
@@ -32,9 +34,10 @@ const context = await esbuild.context({
 		"@lezer/lr",
 		...builtins],
 	format: "cjs",
-	target: "es2018",
+	target: "es2020",
 	logLevel: "info",
 	sourcemap: "inline",
+    metafile: true,
 	treeShaking: true,
 	outfile: "build/main.js",
 	platform: "browser",
@@ -43,5 +46,6 @@ const context = await esbuild.context({
 	],
 });
 
-await context.rebuild();
+const result = await context.rebuild();
+fs.writeFileSync('build/meta.json', JSON.stringify(result.metafile))
 process.exit(0);

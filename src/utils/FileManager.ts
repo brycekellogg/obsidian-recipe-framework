@@ -1,13 +1,9 @@
 import {
-    Vault,
+    App,
+    FrontMatterCache,
     TAbstractFile,
     TFile,
-    TFolder,
 } from 'obsidian';
-
-import {
-    DateTime,
-} from 'luxon';
 
 
 // 
@@ -16,6 +12,11 @@ type CallbackModify = (path: string) => void;
 type CallbackDelete = (path: string) => void;
 type CallbackRename = (path: string, oldPath: string) => void;
 type CallbackAny = CallbackCreate | CallbackModify | CallbackDelete | CallbackRename;
+
+
+export type FrontMatter = {
+    [index: string]: string|string[];
+}
 
 
 /**
@@ -29,7 +30,7 @@ type CallbackAny = CallbackCreate | CallbackModify | CallbackDelete | CallbackRe
  */
 export default class FileManager {
 
-    static vault: Vault;
+    static app: App;
 
     static callbacksCreate: Map<string, CallbackCreate[]> = new Map<string, CallbackCreate[]>();
     static callbacksModify: Map<string, CallbackModify[]> = new Map<string, CallbackModify[]>();
@@ -41,12 +42,12 @@ export default class FileManager {
      *
      *
      */
-    static init(vault: Vault) {
-        this.vault = vault;
-        this.vault.on('create', this.handleCallback.bind(this, this.callbacksCreate));
-        this.vault.on('modify', this.handleCallback.bind(this, this.callbacksModify));
-        this.vault.on('delete', this.handleCallback.bind(this, this.callbacksDelete));
-        this.vault.on('rename', this.handleCallback.bind(this, this.callbacksRename));
+    static init(app: App) {
+        this.app = app;
+        this.app.vault.on('create', this.handleCallback.bind(this, this.callbacksCreate));
+        this.app.vault.on('modify', this.handleCallback.bind(this, this.callbacksModify));
+        this.app.vault.on('delete', this.handleCallback.bind(this, this.callbacksDelete));
+        this.app.vault.on('rename', this.handleCallback.bind(this, this.callbacksRename));
     }
 
     
@@ -65,7 +66,8 @@ export default class FileManager {
     /*
      *
      */
-    static handleCallback(callbackMap: Map<string, CallbackAny[]>, file: TFile, oldPath: string) {
+    static handleCallback(callbackMap: Map<string, CallbackAny[]>, file: TAbstractFile, oldPath: string = '') {
+        if (!(file instanceof TFile)) return;  // Only consider files for now
         for (const [path, callbackList] of callbackMap) {
             if (file.path.startsWith(path)) {
                 for (const callback of callbackList) {
@@ -75,64 +77,50 @@ export default class FileManager {
         }
     }
 
-     
+
     /*
-     * Find files.
      *
-     * This function examines the children of the root TFolder and either adds
-     * them to the list of recipes or recurses if the child is a TFolder. This
-     * allows recipes to be nested in subfolders.
-     *
-     * Note: this function considers all files to be recipes. There
-     *       is currently no checking of file extension or content.
-     *
-     * Params:
-     *    - root = the root folder in which to look for recipes
-     *    - exts = a list of file extension to match
-     *
-     * Returns: a list of files corresponding to all the recipes
-     *          recursively found under the root folder.
      */
-    static findFiles(rootPath: string, exts: string[] = []): string[] {
-        const root: TAbstractFile|null = this.vault.getAbstractFileByPath(rootPath);
-
-        // If it's not found, return empty list
-        if (root == null) return [];
-        
-        // If it's a file, return its path unless the extension doesn't match
-        if (root instanceof TFile) {
-            return exts.includes(root.extension) ? [root.path] : [];
+    static async readFrontmatter(path: string): Promise<FrontMatterCache> {
+        const file: TAbstractFile|null = this.app.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) {
+            return new Promise((resolve) => {
+                this.app.fileManager.processFrontMatter(file, (frontmatter: FrontMatterCache) => {
+                    resolve(frontmatter);
+                })
+            })
+        } else {
+            throw new Error(`File not found: ${path}`);
         }
-        
-        let fileList: string[] = [];
-        for (const child of (root as TFolder).children) {
-            fileList = [...fileList, ...this.findFiles(child.path, exts)];
-        }
-
-        return fileList;
     }
 
 
-    /**
-     *
+    /*
      *
      */
-    static modified(path: string): DateTime|undefined {
-        return DateTime.now();
+    static async writeFrontmatter(path: string, data: {}) {
+        const file: TAbstractFile|null = this.app.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) {
+            this.app.fileManager.processFrontMatter(file, (frontmatter: FrontMatterCache) => {
+                for (const [key, value] of Object.entries(data)) {
+                    if (value) frontmatter[key] = value;
+                }
+            })
+        }
     }
-    
 
-    /**
+
+    /*
      *
      *
      */
     static async read(path: string): Promise<string> {
-        const file: TAbstractFile|null = this.vault.getAbstractFileByPath(path);
+        const file: TAbstractFile|null = this.app.vault.getAbstractFileByPath(path);
         if (file instanceof TFile) {
-            const contents: string = await this.vault.cachedRead(file);
+            const contents: string = await this.app.vault.cachedRead(file);
             return contents;
         } else {
-            return '';
+            throw new Error(`File not found: ${path}`);
         }
     }
 
@@ -142,9 +130,9 @@ export default class FileManager {
      *
      */
     static async write(path: string, contents: string) {
-        const file: TAbstractFile|null = this.vault.getAbstractFileByPath(path);
+        const file: TAbstractFile|null = this.app.vault.getAbstractFileByPath(path);
         if (file instanceof TFile) {
-            this.vault.modify(file, contents);
+            this.app.vault.modify(file, contents);
         }
     }
 }

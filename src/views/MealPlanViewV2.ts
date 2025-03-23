@@ -4,7 +4,7 @@ import {DateTime, Interval} from 'luxon';
 
 import * as templates from '../templates';
 
-import Database          from 'utils/Database';
+import { Database }          from 'utils/Database';
 import SelectRecipeModal from 'utils/SelectRecipeModal';
 
 

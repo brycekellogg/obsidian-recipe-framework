@@ -1,0 +1,221 @@
+{
+  "main": {
+    "id": "134d486989e354c0",
+    "type": "split",
+    "children": [
+      {
+        "id": "484f911b97e1a13d",
+        "type": "split",
+        "children": [
+          {
+            "id": "ede69e080cb6cf20",
+            "type": "tabs",
+            "children": [
+              {
+                "id": "b1794d545109cd07",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "MealPlan.md",
+                    "mode": "preview",
+                    "source": false
+                  },
+                  "icon": "lucide-file",
+                  "title": "MealPlan"
+                }
+              }
+            ]
+          },
+          {
+            "id": "6fafcf8712ac3f58",
+            "type": "tabs",
+            "children": [
+              {
+                "id": "4bd014977b2ef537",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "Recipes/Mashed Potatoes.md",
+                    "mode": "source",
+                    "source": false
+                  },
+                  "icon": "lucide-file",
+                  "title": "Mashed Potatoes"
+                }
+              },
+              {
+                "id": "274a6e570e2910bf",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "Recipes/Fried Chicken.md",
+                    "mode": "source",
+                    "source": false
+                  },
+                  "icon": "lucide-file",
+                  "title": "Fried Chicken"
+                }
+              }
+            ],
+            "currentTab": 1
+          }
+        ],
+        "direction": "horizontal"
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a7195f0e174e584b",
+    "type": "split",
+    "children": [
+      {
+        "id": "7f2e8c9076f6d7d0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "77688117544db4c1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "01e1c8a75f82abac",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "58a87846bcffb17f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "229dafbd09947357",
+    "type": "split",
+    "children": [
+      {
+        "id": "b53dbe3502e8c586",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9206a344591c7d63",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Fried Chicken.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Fried Chicken"
+            }
+          },
+          {
+            "id": "bc7dd3a33e3306bf",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Fried Chicken.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Fried Chicken"
+            }
+          },
+          {
+            "id": "fbe7134fe45bfd97",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "58b5eddd6e237028",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Fried Chicken.md"
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Fried Chicken"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "274a6e570e2910bf",
+  "lastOpenFiles": [
+    "MealPlan.md",
+    "Recipes/Fried Chicken.md",
+    "Recipes/Mashed Potatoes.md",
+    "Recipes/Fried Okra.md",
+    "Recipes/Fried Okra.md",
+    "Recipes/Fried Okra.md",
+    "Recipes/Fried Okra.md",
+    "Recipes/Roast Beef Something.md",
+    "Ingredients",
+    "Recipes"
+  ]
+}
